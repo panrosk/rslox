@@ -1,0 +1,11 @@
+[package]
+name = "lox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+clap = { version = "4.5.18", features = ["derive"] }
+either = "1.13.0"
+strum = { version = "0.26", features = ["derive"] }
+strum_macros = "0.26"
