@@ -7,9 +7,9 @@ use std::collections::HashMap;
 use std::{char, str::Chars, u32, usize};
 
 #[derive(Debug)]
-struct Scanner {
-    source: String,
-    tokens: Vec<Token>,
+pub struct Scanner {
+    pub source: String,
+    pub tokens: Vec<Token>,
     start: u32,
     current: u32,
     line: usize,

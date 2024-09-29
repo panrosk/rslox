@@ -1,9 +1,14 @@
+// This was implemented in the book as a way to understand grammar. Problem is this grammar is
+// ambigous. Im gonna leave at here with the AST printer wich use it and gona make a new one.
+
+use std::fmt::Debug;
+
 use either::Either;
 
 use crate::scanner::tokentype::{Literal, TokenType};
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-enum UnaryOperator {
+pub enum UnaryOperator {
     Minus,
     Bang,
 }
@@ -14,6 +19,13 @@ impl UnaryOperator {
             TokenType::Minus => Some(UnaryOperator::Minus),
             TokenType::Bang => Some(UnaryOperator::Bang),
             _ => None,
+        }
+    }
+
+    pub fn to_token(&self) -> TokenType {
+        match self {
+            UnaryOperator::Minus => TokenType::Minus,
+            UnaryOperator::Bang => TokenType::Bang,
         }
     }
 }
@@ -53,32 +65,50 @@ impl Operator {
         }
     }
 
-    pub fn precedence(&self) -> u8 {
+    pub fn to_token(&self) -> TokenType {
         match self {
-            Operator::Plus | Operator::Minus => 1,
-            Operator::Star | Operator::Slash => 2,
-            Operator::BangEqual | Operator::EqualEqual => 3,
-            Operator::Greater | Operator::GreaterEqual | Operator::Less | Operator::LessEqual => 4,
-            Operator::Bang | Operator::Equal => 0,
+            Operator::Plus => TokenType::Plus,
+            Operator::Minus => TokenType::Minus,
+            Operator::Star => TokenType::Star,
+            Operator::Slash => TokenType::Slash,
+            Operator::Bang => TokenType::Bang,
+            Operator::BangEqual => TokenType::BangEqual,
+            Operator::Equal => TokenType::Equal,
+            Operator::EqualEqual => TokenType::EqualEqual,
+            Operator::Greater => TokenType::Greater,
+            Operator::GreaterEqual => TokenType::GreaterEqual,
+            Operator::Less => TokenType::Less,
+            Operator::LessEqual => TokenType::LessEqual,
         }
     }
 }
 
-pub trait Expression {
+pub trait Expression: Debug {
     fn accept(&self, visitor: &mut dyn Visitor) -> String;
 }
 
 pub trait Visitor {
-    fn visit_binaryexpr(&self, expr: &BinaryExpr) -> String;
-    fn visit_unaryexpr(&self, expr: &UnaryExpr) -> String;
-    fn visit_gropingexpr(&self, expr: &GroupingExpr) -> String;
-    fn visit_literalexpr(&self, expr: &LiteralExpr) -> String;
+    fn visit_binaryexpr(&mut self, expr: &BinaryExpr) -> String;
+    fn visit_unaryexpr(&mut self, expr: &UnaryExpr) -> String;
+    fn visit_gropingexpr(&mut self, expr: &GroupingExpr) -> String;
+    fn visit_literalexpr(&mut self, expr: &LiteralExpr) -> String;
 }
 
+#[derive(Debug)]
 pub struct BinaryExpr {
     pub left: Box<dyn Expression>,
     pub operator: TokenType,
     pub right: Box<dyn Expression>,
+}
+
+impl BinaryExpr {
+    pub fn new(left: Box<dyn Expression>, operator: TokenType, right: Box<dyn Expression>) -> Self {
+        BinaryExpr {
+            left,
+            right,
+            operator,
+        }
+    }
 }
 
 impl Expression for BinaryExpr {
@@ -87,6 +117,7 @@ impl Expression for BinaryExpr {
     }
 }
 
+#[derive(Debug)]
 pub struct UnaryExpr {
     pub operator: UnaryOperator,
     pub expression: Box<dyn Expression>,
@@ -98,6 +129,7 @@ impl Expression for UnaryExpr {
     }
 }
 
+#[derive(Debug)]
 pub struct GroupingExpr {
     pub expression: Box<dyn Expression>,
 }
@@ -108,8 +140,15 @@ impl Expression for GroupingExpr {
     }
 }
 
+#[derive(Debug)]
 pub struct LiteralExpr {
     pub value: Either<Literal, TokenType>,
+}
+
+impl LiteralExpr {
+    pub fn new(literal: Either<Literal, TokenType>) -> Self {
+        LiteralExpr { value: literal }
+    }
 }
 
 impl Expression for LiteralExpr {
